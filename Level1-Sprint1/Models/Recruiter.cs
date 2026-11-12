@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Level1_Sprint1
+namespace Level1_Sprint1.Models
 {
     public class Recruiter : IEntity
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Level1_Sprint1
+namespace Level1_Sprint1.Models
 {
     public enum CStatus { Pending, Approved, Rejected }
     public class Company : IEntity
