@@ -39,6 +39,29 @@ namespace Level1_Sprint1
         {
             return Entities;
         }
+        public List<T> Find(Predicate<T> predicate)
+        {
+            var results = new List<T>();
+
+            foreach (T item in Entities)
+            {
+                if (predicate(item))
+                {
+                    results.Add(item);
+                }
+            }
+
+            return results;
+        }
+
+        public List<T> Sort(Comparison<T> comparison)
+        {
+            var sortedItems = new List<T>(Entities);
+
+            sortedItems.Sort(comparison);
+
+            return sortedItems;
+        }
 
     }
 }

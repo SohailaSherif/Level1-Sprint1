@@ -2,12 +2,40 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Level1_Sprint1.Events;
 
 namespace Level1_Sprint1.Services
 {
     internal class CompanyService
     {
-        public static void CompanyMenu(DataStore<Company> companyStore, Stack<(int, CStatus)> undoStack)
+        public static event EventHandler<CompanyApproved>? CompanyApproved;
+        public static List<Company> GetByStatus(DataStore<Company> companyStore, CompanyStatus status)
+        {
+            return companyStore.Find(c => c.Status == status);
+        }
+        public static bool ApproveCompany(DataStore<Company> companyStore, int companyId, Stack<(int, CompanyStatus)>? undoStack = null)
+        {
+            var company = companyStore.GetById(companyId);
+            if (company != null && company.Status == CompanyStatus.Pending)
+            {
+                undoStack?.Push((company.Id, company.Status));
+                company.Status = CompanyStatus.Approved;
+                return true;
+            }
+            return false;
+        }
+        public static bool RejectCompany(DataStore<Company> companyStore, int companyId, Stack<(int, CompanyStatus)>? undoStack = null)
+        {
+            var company = companyStore.GetById(companyId);
+            if (company != null && company.Status == CompanyStatus.Pending)
+            {
+                undoStack?.Push((company.Id, company.Status));
+                company.Status = CompanyStatus.Rejected;
+                return true;
+            }
+            return false;
+        }
+        public static void CompanyMenu(DataStore<Company> companyStore, Stack<(int, CompanyStatus)> undoStack)
         {
             while (true)
             {
@@ -19,8 +47,9 @@ namespace Level1_Sprint1.Services
                 Console.WriteLine("4. Add New Company");
                 Console.WriteLine("5. Update Company Information");
                 Console.WriteLine("6. Remove Company");
-                Console.WriteLine("7. Back to Main Menu");
-                if (!int.TryParse(Console.ReadLine(), out int choice) || choice == 7) break;
+                Console.WriteLine("7. List Companies by Status (Pending/Approved/Rejected)");
+                Console.WriteLine("8. Back to Main Menu");
+                if (!int.TryParse(Console.ReadLine(), out int choice) || choice == 8) break;
                 switch (choice)
                 {
                     case 1:
@@ -41,9 +70,9 @@ namespace Level1_Sprint1.Services
                                 undoStack.Push((comp.Id, comp.Status));
 
                                 Console.Write("New Status (0: Pending, 1: Approved, 2: Rejected): ");
-                                if (int.TryParse(Console.ReadLine(), out int statusInt) && Enum.IsDefined(typeof(CStatus), statusInt))
+                                if (int.TryParse(Console.ReadLine(), out int statusInt) && Enum.IsDefined(typeof(CompanyStatus), statusInt))
                                 {
-                                    comp.Status = (CStatus)statusInt;
+                                    comp.Status = (CompanyStatus)statusInt;
                                     Console.WriteLine("Status updated!");
                                 }
                                 else { Console.WriteLine("Invalid status value."); }
@@ -76,7 +105,7 @@ namespace Level1_Sprint1.Services
                         string city = Console.ReadLine();
                         int maxId = 0;
                         foreach (var c in companyStore.GetAll()) if (c.Id > maxId) maxId = c.Id;
-                        var newCompany = new Company { Id = maxId + 1, Name = name, Industry = industry, City = city, Status = CStatus.Pending };
+                        var newCompany = new Company { Id = maxId + 1, Name = name, Industry = industry, City = city, Status = CompanyStatus.Pending };
                         companyStore.Add(newCompany);
                         Console.WriteLine($"[Success]: Added new company '{name}' with ID {newCompany.Id} and status 'Pending'.");
                         break;
@@ -129,11 +158,30 @@ namespace Level1_Sprint1.Services
                             Console.WriteLine("Invalid Company ID.");
                         }
                         break;
+                    case 7:
+                        Console.Write("Select Status (0: Pending, 1: Approved, 2: Rejected): ");
+                        if (int.TryParse(Console.ReadLine(), out int statusChoice) && Enum.IsDefined(typeof(CompanyStatus), statusChoice))
+                        {
+                            var selectedStatus = (CompanyStatus)statusChoice;
+                            var companiesByStatus = GetByStatus(companyStore, selectedStatus);
+                            Console.WriteLine($"==== Companies with Status: {selectedStatus} ====");
+                            foreach (var c in companiesByStatus)
+                            {
+                                Console.WriteLine($"ID: {c.Id} | Name: {c.Name} | Industry: {c.Industry} | City: {c.City}");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid status choice.");
+                        }
+                        break;
                     default:
                         Console.WriteLine("Invalid choice.");
                         break;
                 }
             }
         }
+
+
     }
 }
